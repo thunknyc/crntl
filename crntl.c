@@ -90,6 +90,21 @@ void crntl_ungettok(struct Token *token,
   token->wcs_length = 0;
 }
 
+#define TOKENIZER_ERROR(MSG) \
+  {			     \
+    token->type = ERROR;     \
+    free(token->wcs);	     \
+    token->wcs = NULL;	     \
+    token->wcs_length = 0;   \
+  }
+
+#define REWIND()				\
+  {						\
+    tokenizer_state->column--;			\
+    ungetwc(wc, in);				\
+    INSERT(token, '\0');			\
+  }
+
 void crntl_gettok(FILE *in,
 		  struct Token *token,
 		  struct TokenizerState *tokenizer_state) {
@@ -118,7 +133,7 @@ void crntl_gettok(FILE *in,
       case '"': state = INSTRING; token->type = STRINGVAL; break;
       case '#': state = INOCTO; break;
       case '~': state = INTILDE; break;
-      case ':': state = INKEYWORD; break;
+      case ':': token->type = KEYWORDVAL; state = INSYMBOL; break;
 
       case '\n': case '\f':
 	tokenizer_state->line++; tokenizer_state->column = -1;
@@ -157,7 +172,7 @@ void crntl_gettok(FILE *in,
 	break;
 
       default:
-	token->type = ERROR;
+	TOKENIZER_ERROR("Found unknown character")
 	return;
       }
       break;
@@ -165,9 +180,11 @@ void crntl_gettok(FILE *in,
     case INOCTO:
       switch (wc) {
       case '{': token->type = STARTSET; return;
-      case '(':	token->type = STARTFUNC; return;
+      case '(': token->type = STARTFUNC; return;
       case '\'': token->type = VARQUOTE; return;
-      default: token->type = ERROR; return;
+      default:
+	TOKENIZER_ERROR("Found unknown character after octothorpe");
+	return;
       }
 
     case INTILDE:
@@ -266,10 +283,7 @@ void crntl_gettok(FILE *in,
 	break;
 
       default:
-	token->type = ERROR;
-	free(token->wcs);
-	token->wcs = NULL;
-	token->wcs_length = 0;
+	TOKENIZER_ERROR("Needed a sign or digit")
 	return;
       }
       break;
@@ -281,10 +295,7 @@ void crntl_gettok(FILE *in,
 	INSERT(token, wc);
 	break;
       default:
-	token->type = ERROR;
-	free(token->wcs);
-	token->wcs = NULL;
-	token->wcs_length = 0;
+	TOKENIZER_ERROR("Needed an exponent digit")
 	return;
       }
       break;
@@ -306,10 +317,7 @@ void crntl_gettok(FILE *in,
     case INCHAR:
       switch (wc) {
       case ' ': case '\t': case '\n': case '\f':
-	token->type = ERROR;
-	free(token->wcs);
-	token->wcs = NULL;
-	token->wcs_length = 0;
+	TOKENIZER_ERROR("Needed a visible character");
 	return;
       default:
 	state = INCHAR2;
@@ -321,17 +329,13 @@ void crntl_gettok(FILE *in,
     case INCHAR2:
       switch (wc) {
       case WHITESPACE:
-	tokenizer_state->column--;
-	ungetwc(wc, in);
-	INSERT(token, '\0');
+	REWIND();
 	return;
       case ALPHA:
 	INSERT(token, wc);
 	break;
       default:
-	tokenizer_state->column--;
-	ungetwc(wc, in);
-	INSERT(token, '\0');
+	REWIND();
 	return;
       }
       break;
@@ -346,9 +350,7 @@ void crntl_gettok(FILE *in,
 	break;
 
       default:
-	tokenizer_state->column--;
-	ungetwc(wc, in);
-	INSERT(token, '\0');
+	REWIND();
 	return;
       }
       break;
@@ -364,25 +366,13 @@ void crntl_gettok(FILE *in,
 
       case NUMERIC:
 	// Oops, no, we're really in a number
-	if (token->type == KEYWORDVAL) {
-	  // If we're in a keyword we can't change
-	  // horses mid-stream.
-	  token->type = ERROR;
-	  free(token->wcs);
-	  token->wcs = NULL;
-	  token->wcs_length = 0;
-	  return;
-	}
-
 	token->type = token->wcs[0] == '.' ? FLOATVAL : INTVAL;
 	state = INNUMERICVAL;
 	INSERT(token, wc);
 	break;
 
       default:
-	tokenizer_state->column--;
-	ungetwc(wc, in);
-	INSERT(token, '\0');
+	REWIND();
 	return;
       }
     }
