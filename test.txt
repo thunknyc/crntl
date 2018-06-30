@@ -1,0 +1,10 @@
+(def hilbert-rules {:L [:+ :R :F :- :L :F :L :- :F :R :+]
+                    :R [:- :L :F :+ :R :F :R :+ :F :L :-]})
+
+(defn produce-steps [rules start-steps iters]
+  (loop [steps start-steps
+         i iters]
+    (if (zero? i)
+      (filter #{:- :+ :F} steps)
+      (recur (flatten (for [sym steps] (sym rules sym)))
+             (dec i)))))
