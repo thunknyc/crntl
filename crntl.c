@@ -143,16 +143,22 @@ void crntl_gettok(FILE *in,
 	state = INSYMBOL;
 	INSERT(token, wc);
 	break;
+
       case '+': case '-': case '.':
 	token->type = SYMBOLVAL;
 	INSERT(token, wc);
 	state = INTENTATIVESYMBOL;
 	break;
+
       case NUMERIC:
 	token->type = INTVAL;
 	state = INNUMERICVAL;
 	INSERT(token, wc);
 	break;
+
+      default:
+	token->type = ERROR;
+	return;
       }
       break;
 
