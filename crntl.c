@@ -294,9 +294,14 @@ void crntl_gettok(FILE *in,
 	ungetwc(wc, in);
 	INSERT(token, '\0');
 	return;
-      default:
+      case ALPHA:
 	INSERT(token, wc);
 	break;
+      default:
+	tokenizer_state->column--;
+	ungetwc(wc, in);
+	INSERT(token, '\0');
+	return;
       }
       break;
 
