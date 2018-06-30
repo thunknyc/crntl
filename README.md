@@ -44,5 +44,106 @@ multiline string extension.
 
 ## Current status
 
-* Lexer works with limitations -- see issues.
-* Parser compiles and runs but output is untested.
+* Lexer works with limitations -- see issues
+* Parser produces correct output on well-formed input
+
+## Example
+
+Given a file `test.txt` with contents
+
+```
+(def hilbert-rules {:L [:+ :R :F :- :L :F :L :- :F :R :+]
+                    :R [:- :L :F :+ :R :F :R :+ :F :L :-]})
+
+(defn produce-steps [rules start-steps iters]
+  (loop [steps start-steps
+         i iters]
+    (if (zero? i)
+      (filter #{:- :+ :F} steps)
+      (recur (flatten (for [sym steps] (sym rules sym)))
+             (dec i)))))
+```
+
+the command `./crntl < test.txt` produces the ouput
+
+```
+List value
+ Symbol value: def
+ Symbol value: hilbert-rules
+ Dictionary value
+  Entry:
+   Keyword value: L
+    Vect value
+    Keyword value: +
+    Keyword value: R
+    Keyword value: F
+    Keyword value: -
+    Keyword value: L
+    Keyword value: F
+    Keyword value: L
+    Keyword value: -
+    Keyword value: F
+    Keyword value: R
+    Keyword value: +
+  Entry:
+   Keyword value: R
+    Vect value
+    Keyword value: -
+    Keyword value: L
+    Keyword value: F
+    Keyword value: +
+    Keyword value: R
+    Keyword value: F
+    Keyword value: R
+    Keyword value: +
+    Keyword value: F
+    Keyword value: L
+    Keyword value: -
+List value
+ Symbol value: defn
+ Symbol value: produce-steps
+ Vect value
+  Symbol value: rules
+  Symbol value: start-steps
+  Symbol value: iters
+ List value
+  Symbol value: loop
+  Vect value
+   Symbol value: steps
+   Symbol value: start-steps
+   Symbol value: i
+   Symbol value: iters
+  List value
+   Symbol value: if
+   List value
+    Symbol value: zero?
+    Symbol value: i
+   List value
+    Symbol value: filter
+    Set value
+     Keyword value: -
+     Keyword value: +
+     Keyword value: F
+    Symbol value: steps
+   List value
+    Symbol value: recur
+    List value
+     Symbol value: flatten
+     List value
+      Symbol value: for
+      Vect value
+       Symbol value: sym
+       Symbol value: steps
+      List value
+       Symbol value: sym
+       Symbol value: rules
+       Symbol value: sym
+    List value
+     Symbol value: dec
+     Symbol value: i
+End of input
+Gracefully exiting
+```
+
+.
+

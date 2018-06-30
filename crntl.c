@@ -327,8 +327,10 @@ void crntl_read_list(FILE *in,
 		     struct TokenizerState *ts,
 		     enum TokenType end_type) {
 
+  struct ParserSequenceItem *parent = NULL;
   struct ParserSequenceItem *tail = malloc(sizeof(struct ParserSequenceItem));
-  v->content.head_item =tail;
+
+  v->content.head_item = tail;
   
   struct Token t;
   while (1) {
@@ -350,11 +352,18 @@ void crntl_read_list(FILE *in,
 	crntl_freevalue(v);
 	v->type = ERROR_VALUE;
 	v->content.error_string = "Unexpected token";
+      } else if (parent != NULL) {
+	free(parent->next);
+	parent->next = NULL;
+      } else {
+	free(v->content.head_item);
+	v->content.head_item = NULL;
       }
       return;
     }
 
     tail->next = malloc(sizeof(struct ParserSequenceItem));
+    parent = tail;
     tail = tail->next;
   }
 }
@@ -363,8 +372,9 @@ void crntl_read_dict(FILE *in,
 		     struct ParserValue *v,
 		     struct TokenizerState *ts) {
 
+  struct ParserSequenceItem *parent = NULL;
   struct ParserSequenceItem *tail = malloc(sizeof(struct ParserSequenceItem));
-  v->content.head_item =tail;
+  v->content.head_item = tail;
   
   struct Token t;
   while (1) {
@@ -386,6 +396,12 @@ void crntl_read_dict(FILE *in,
 	crntl_freevalue(v);
 	v->type = ERROR_VALUE;
 	v->content.error_string = "Unexpected token while looking for key";
+      } else if (parent != NULL) {
+	free(parent->next);
+	parent->next = NULL;
+      } else {
+	free(v->content.head_item);
+	v->content.head_item = NULL;
       }
       return;
     }
@@ -400,6 +416,7 @@ void crntl_read_dict(FILE *in,
     }
     
     tail->next = malloc(sizeof(struct ParserSequenceItem));
+    parent = tail;
     tail = tail->next;
   }
 }
