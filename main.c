@@ -29,7 +29,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "crntl.h"
 
 void pad(FILE *out, int depth) {
-  for(int i = 0; i < depth; i++) fputc(' ', out);
+  for(int i = 0; i < depth; i++) fputc('.', out);
 }
 
 #define DUMPPRIMITIVE(LABEL)			\
@@ -67,9 +67,8 @@ void pad(FILE *out, int depth) {
 	elem != NULL;							\
 	elem = elem->next) {						\
       pad(out, depth);							\
-      fprintf(out, " Entry:\n");					\
+      fprintf(out, ".Entry:\n");					\
       dumpval1(out, &elem->value.key_entry.k, depth + 2);		\
-      pad(out, depth);							\
       dumpval1(out, &elem->value.key_entry.v, depth + 2);		\
     }									\
  }									
