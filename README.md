@@ -1,5 +1,7 @@
 # CRNTL: C Reader for the Next Thousand Lisps
 
+## Introduction
+
 My attraction to Clojure back in '09 was based on several
 things. First, there were some killer apps i.e. Incanter and
 Cascalog. Second, I appreciated the pragmatism of making peace with
@@ -39,3 +41,20 @@ Clojure reader. I am open to evolving this project beyond of the
 Clojure reader, assuming the changes are worthwhile and mostly
 backwards compatible. At present, I am most open to a HEREDOC or
 multiline string extension.
+
+## Current status
+
+Lexer works with limitations -- see issues.
+
+INPUT: ```(def x ^:dynamic 42)```
+
+Sample program output:
+```
+Start list at line 0, col 0
+Symbol: def at line 0, col 3
+Symbol: x at line 0, col 5
+Meta at line 0, col 7
+Keyword: dynamic at line 0, col 15
+Integer: 42 at line 0, col 18
+End list or func shortcut at line 0, col 19
+```
