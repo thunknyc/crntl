@@ -64,6 +64,8 @@ Given a file `test.txt` with contents
              (dec i)))))
 ```
 
+from [this
+gist](https://gist.github.com/edw/ecc94abfef6cf50e161d0e1d639e34e4)
 the command `./crntl < test.txt` produces the ouput
 
 ```
