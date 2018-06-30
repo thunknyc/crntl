@@ -39,10 +39,9 @@ preserve comments and other surface syntax features, but I consider
 such things "stretch goals."
 
 CRNTL is written in C, still the lingua franc of contemporary
-computing, and I will be writing the lexer by hand and (probably) using
-Lemon to create the parser. I am focused on writing iOS apps at the
-moment so I will eventually be putting effort into making sure that
-this project plays nicely with Swift.
+computing. I am focused on writing iOS apps at the moment so I will
+eventually be putting effort into making sure that this project plays
+nicely with Swift.
 
 Finally, I do not intend to enshrine the limitations of the current
 Clojure reader. I am open to evolving this project beyond of the
