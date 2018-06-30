@@ -4,6 +4,7 @@
 
 * Assumes UTF-8, newline line endings
 * Symbols, keywords must be ASCII
+* #inst and other tagged literals not supported
 * Lexer works with limitations -- see issues
 * Parser produces (AFAIK) correct output on well-formed input
 * `main.c` contains a sample usage of the parser
