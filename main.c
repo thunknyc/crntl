@@ -60,6 +60,8 @@ void dumpval1(FILE *out, struct ParserValue *v, int depth) {
     case FLOATVAL: DUMPPRIMITIVE("Float"); break;
     case SYMBOLVAL: DUMPPRIMITIVE("Symbol"); break;
     case KEYWORDVAL: DUMPPRIMITIVE("Keyword"); break;
+    case STRINGVAL: DUMPPRIMITIVE("String"); break;
+    case CHARVAL: DUMPPRIMITIVE("Character"); break;
       
     default: DUMPPRIMITIVE("Unknown"); break;	
     }

@@ -6,8 +6,9 @@
 enum TokenizerReadState
   {
    START, INOCTO, INKEYWORD, INTILDE,
-   INNUMERICVAL, INEXPONENT, INEXPONENTDIGITS,
-   INSYMBOL, INTENTATIVESYMBOL
+   INNUMERICVAL, INEXPONENT, INEXPONENTFIRSTDIGIT,
+   INEXPONENTDIGITS, INSYMBOL, INTENTATIVESYMBOL,
+   INSTRING, INSTRINGESCAPE, INCHAR, INCHAR2
   };
 
 void crntl_state_init(struct TokenizerState *tokenizer_state) {
@@ -32,6 +33,9 @@ void crntl_freetok(struct Token token) {
     TOKPTR->wcs[TOKPTR->wcs_length++] = WC;				\
   }
 
+#define WHITESPACE					\
+  ' ': case '\t': case '\n': case '\f': case ','
+
 #define ALPHA						\
   'A': case 'B': case 'C': case 'D': case 'E':		\
   case 'F': case 'G': case 'H': case 'I': case 'J':	\
@@ -47,7 +51,7 @@ void crntl_freetok(struct Token token) {
   case 'z'
 
 #define NUMERIC						\
-  '0': case '1': case '2': case '3': case '4':		\
+  '0': case '1': case '2': case '3': case '4':			\
   case '5': case '6': case '7': case '8': case '9'
 
 
@@ -73,11 +77,11 @@ void crntl_gettok(FILE *in,
 
   wint_t wc;
   enum TokenizerReadState state = START;
-  
+
   token->type = ERROR;
   token->wcs = NULL;
   token->wcs_length = 0;
-  
+
   while(1) {
     wc = getwc(in);
     tokenizer_state->column++;
@@ -85,11 +89,14 @@ void crntl_gettok(FILE *in,
     case START:
       switch (wc) {
       case WEOF: token->type = ENDOFINPUT; return;
-      case '#':	state = INOCTO; break;
+      case '\\': state = INCHAR; token->type = CHARVAL; break;
+      case '"': state = INSTRING; token->type = STRINGVAL; break;
+      case '#': state = INOCTO; break;
       case '~': state = INTILDE; break;
       case ':': state = INKEYWORD; break;
 
-      case '\n': tokenizer_state->line++; tokenizer_state->column = -1;
+      case '\n': case '\f':
+	tokenizer_state->line++; tokenizer_state->column = -1;
 	// fall through and...
       case ' ': case '\t': case ',': break; // ..eat whitespace
 
@@ -103,27 +110,27 @@ void crntl_gettok(FILE *in,
       case '\'': token->type = QUOTE; return;
       case '`': token->type = QUASIQUOTE; return;
       case '^': token->type = HAT; return;
-	
+
       case ALPHA:
       case '*': case '!': case '_': case '?': case '$':
       case '%': case '&': case '=': case '<': case '>':
 	token->type = SYMBOLVAL;
 	state = INSYMBOL;
 	INSERT(token, wc);
-	break;   
+	break;
       case '+': case '-': case '.':
 	token->type = SYMBOLVAL;
 	INSERT(token, wc);
 	state = INTENTATIVESYMBOL;
-	break;   
+	break;
       case NUMERIC:
 	token->type = INTVAL;
 	state = INNUMERICVAL;
 	INSERT(token, wc);
-	break;   
+	break;
       }
       break;
-      
+
     case INOCTO:
       switch (wc) {
       case '{': token->type = STARTSET; return;
@@ -131,7 +138,7 @@ void crntl_gettok(FILE *in,
       case '\'': token->type = VARQUOTE; return;
       default: token->type = ERROR; return;
       }
-      
+
     case INTILDE:
       switch (wc) {
       case '@': token->type = UNQUOTESPLICE; return;
@@ -141,7 +148,37 @@ void crntl_gettok(FILE *in,
 	token->type = UNQUOTE;
 	return;
       }
-      
+      break;
+
+    case INSTRING:
+      switch (wc) {
+      case '"':
+	INSERT(token, '\0');
+	return;
+      case '\\':
+	state = INSTRINGESCAPE;
+	INSERT(token, '\\');
+	break;
+      default:
+	INSERT(token, wc);
+	break;
+      }
+      break;
+
+    case INSTRINGESCAPE:
+      switch (wc) {
+      case '"': case '\\':
+	state = INSTRING;
+	INSERT(token, wc);
+	break;
+      default:
+	// Need to sort out legal from illegal escape chars.
+	state = INSTRING;
+	INSERT(token, wc);
+	break;
+      }
+      break;
+
     case INKEYWORD:
       switch (wc) {
       case ALPHA:
@@ -150,16 +187,16 @@ void crntl_gettok(FILE *in,
 	token->type = KEYWORDVAL;
 	state = INSYMBOL;
 	INSERT(token, wc);
-	break;   
+	break;
 
       case '+': case '-': case '.':
 	token->type = KEYWORDVAL;
 	state = INTENTATIVESYMBOL;
 	INSERT(token, wc);
-	break;   	
+	break;
       }
       break;
-      
+
     case INNUMERICVAL:
       switch (wc) {
       case NUMERIC: INSERT(token, wc); break;
@@ -169,14 +206,14 @@ void crntl_gettok(FILE *in,
 	token->type = FLOATVAL;
 	INSERT(token, wc);
 	break;
-	
+
       case 'e': case 'E':
 	// Promote to float
 	token->type = FLOATVAL;
 	state = INEXPONENT;
 	INSERT(token, wc);
 	break;
-	
+
       default:
 	tokenizer_state->column--;
 	ungetwc(wc, in);
@@ -184,27 +221,43 @@ void crntl_gettok(FILE *in,
 	return;
       }
       break;
-      
+
     case INEXPONENT:
       switch (wc) {
       case '-': case '+':
-	state = INEXPONENTDIGITS;
+	state = INEXPONENTFIRSTDIGIT;
 	INSERT(token, wc);
 	break;
-	
+
       case NUMERIC:
 	state = INEXPONENTDIGITS;
 	INSERT(token, wc);
 	break;
-	
+
       default:
-	tokenizer_state->column--;
-	ungetwc(wc, in);
-	INSERT(token, '\0');
+	token->type = ERROR;
+	free(token->wcs);
+	token->wcs = NULL;
+	token->wcs_length = 0;
 	return;
       }
       break;
-      
+
+    case INEXPONENTFIRSTDIGIT:
+      switch (wc) {
+      case NUMERIC:
+	state = INEXPONENTDIGITS;
+	INSERT(token, wc);
+	break;
+      default:
+	token->type = ERROR;
+	free(token->wcs);
+	token->wcs = NULL;
+	token->wcs_length = 0;
+	return;
+      }
+      break;
+
     case INEXPONENTDIGITS:
       switch (wc) {
       case NUMERIC:
@@ -216,6 +269,34 @@ void crntl_gettok(FILE *in,
 	ungetwc(wc, in);
 	INSERT(token, '\0');
 	return;
+      }
+      break;
+
+    case INCHAR:
+      switch (wc) {
+      case ' ': case '\t': case '\n': case '\f':
+	token->type = ERROR;
+	free(token->wcs);
+	token->wcs = NULL;
+	token->wcs_length = 0;
+	return;
+      default:
+	state = INCHAR2;
+	INSERT(token, wc);
+	break;
+      }
+      break;
+
+    case INCHAR2:
+      switch (wc) {
+      case WHITESPACE:
+	tokenizer_state->column--;
+	ungetwc(wc, in);
+	INSERT(token, '\0');
+	return;
+      default:
+	INSERT(token, wc);
+	break;
       }
       break;
 
@@ -260,7 +341,7 @@ void crntl_gettok(FILE *in,
 	token->type = token->wcs[0] == '.' ? FLOATVAL : INTVAL;
 	state = INNUMERICVAL;
 	INSERT(token, wc);
-	break;	
+	break;
 
       default:
 	tokenizer_state->column--;
@@ -284,7 +365,7 @@ void crntl_freevalue(struct ParserValue *v) {
   case ERROR_VALUE:
     // free(v->content.error_string); All error strings are static.
     break;
-    
+
   case PRIMITIVE_VALUE:
     crntl_freetok(v->content.token);
     break;
@@ -309,10 +390,10 @@ void crntl_freevalue(struct ParserValue *v) {
       }
     }
     break;
-    
+
   case DEREF_VALUE: case QUOTE_VALUE: case QUASIQUOTE_VALUE:
   case UNQUOTE_VALUE: case UNQUOTESPLICE_VALUE: case META_VALUE:
-  case VARQUOTE_VALUE: 
+  case VARQUOTE_VALUE:
     crntl_freevalue(v->content.boxed_value);
     free(v->content.boxed_value);
     break;
@@ -331,11 +412,11 @@ void crntl_read_list(FILE *in,
   struct ParserSequenceItem *tail = malloc(sizeof(struct ParserSequenceItem));
 
   v->content.head_item = tail;
-  
+
   struct Token t;
   while (1) {
 
-    if (tail == NULL) { 
+    if (tail == NULL) {
       crntl_freevalue(v);
       v->type = ERROR_VALUE;
       v->content.error_string = "Parser out of memory";
@@ -343,7 +424,7 @@ void crntl_read_list(FILE *in,
     }
 
     tail->next = NULL;
-    
+
     crntl_read(in, &tail->value.i, ts);
 
     if (tail->value.i.type == ERROR_VALUE) {
@@ -375,11 +456,11 @@ void crntl_read_dict(FILE *in,
   struct ParserSequenceItem *parent = NULL;
   struct ParserSequenceItem *tail = malloc(sizeof(struct ParserSequenceItem));
   v->content.head_item = tail;
-  
+
   struct Token t;
   while (1) {
 
-    if (tail == NULL) { 
+    if (tail == NULL) {
       crntl_freevalue(v);
       v->type = ERROR_VALUE;
       v->content.error_string = "Parser out of memory";
@@ -387,9 +468,9 @@ void crntl_read_dict(FILE *in,
     }
 
     tail->next = NULL;
-    
+
     crntl_read(in, &tail->value.key_entry.k, ts);
-    
+
     if (tail->value.key_entry.k.type == ERROR_VALUE) {
       crntl_gettok(in, &t, ts);
       if (t.type != ENDDICT) {
@@ -414,7 +495,7 @@ void crntl_read_dict(FILE *in,
       v->content.error_string = "Unexpected token while looking for value";
       return;
     }
-    
+
     tail->next = malloc(sizeof(struct ParserSequenceItem));
     parent = tail;
     tail = tail->next;
@@ -432,7 +513,7 @@ void crntl_read_box(FILE *in,
   }
 
   crntl_read(in, v->content.boxed_value, ts);
-  
+
   if (v->content.boxed_value->type == ERROR_VALUE) {
     free(v->content.boxed_value);
     v->type = ERROR_VALUE;
@@ -446,26 +527,27 @@ void crntl_read(FILE *in,
 
   struct Token t;
   struct ParserSequenceItem **current = &(v->content.head_item);
-  
+
   v->content.head_item = NULL;
-  
+
   crntl_gettok(in, &t, ts);
-    
+
   switch (t.type) {
-    
+
   case ERROR:
     PARSE_ERROR(v, "Lexer error"); break;
   case OUTOFMEMORY:
     PARSE_ERROR(v, "Lexer out of memory"); break;
-    
+
   case ENDOFINPUT:
     v->type = END_VALUE; break;
-	
+
   case INTVAL: case FLOATVAL: case SYMBOLVAL: case KEYWORDVAL:
+  case STRINGVAL: case CHARVAL:
     v->type = PRIMITIVE_VALUE;
     v->content.token = t;
     break;
-    
+
   case STARTLIST:
     v->type = LIST_VALUE;
     crntl_read_list(in, v, ts, ENDLIST);
@@ -487,36 +569,36 @@ void crntl_read(FILE *in,
     v->type = DICT_VALUE;
     crntl_read_dict(in, v, ts);
     break;
-    
+
   case VARQUOTE:
     v->type = VARQUOTE_VALUE;
     crntl_read_box(in, v, ts);
     break;
-  case DEREF: 
-    v->type = DEREF_VALUE; 
+  case DEREF:
+    v->type = DEREF_VALUE;
     crntl_read_box(in, v, ts);
     break;
-  case HAT: 
-    v->type = META_VALUE; 
+  case HAT:
+    v->type = META_VALUE;
     crntl_read_box(in, v, ts);
     break;
-  case QUOTE: 
-    v->type = QUOTE_VALUE; 
+  case QUOTE:
+    v->type = QUOTE_VALUE;
     crntl_read_box(in, v, ts);
     break;
-  case QUASIQUOTE: 
-    v->type = QUASIQUOTE_VALUE; 
+  case QUASIQUOTE:
+    v->type = QUASIQUOTE_VALUE;
     crntl_read_box(in, v, ts);
     break;
-  case UNQUOTE: 
-    v->type = UNQUOTE_VALUE; 
+  case UNQUOTE:
+    v->type = UNQUOTE_VALUE;
     crntl_read_box(in, v, ts);
     break;
   case UNQUOTESPLICE:
-    v->type = UNQUOTESPLICE_VALUE; 
+    v->type = UNQUOTESPLICE_VALUE;
     crntl_read_box(in, v, ts);
     break;
-    
+
   default:
     crntl_ungettok(&t, ts);
     PARSE_ERROR(v, "Unexpected token"); break;
