@@ -44,17 +44,5 @@ multiline string extension.
 
 ## Current status
 
-Lexer works with limitations -- see issues.
-
-INPUT: ```(def x ^:dynamic 42)```
-
-Sample program output:
-```
-Start list at line 0, col 0
-Symbol: def at line 0, col 3
-Symbol: x at line 0, col 5
-Meta at line 0, col 7
-Keyword: dynamic at line 0, col 15
-Integer: 42 at line 0, col 18
-End list or func shortcut at line 0, col 19
-```
+* Lexer works with limitations -- see issues.
+* Parser compiles and runs but output is untested.
