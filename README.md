@@ -1,5 +1,13 @@
 # CRNTL: C Reader for the Next Thousand Lisps
 
+## Current status
+
+* Assumes UTF-8, newline line endings
+* Symbols, keywords must be ASCII
+* Lexer works with limitations -- see issues
+* Parser produces (AFAIK) correct output on well-formed input
+* `main.c` contains a sample usage of the parser
+
 ## Introduction
 
 My attraction to Clojure back in '09 was based on several
@@ -41,11 +49,6 @@ Clojure reader. I am open to evolving this project beyond of the
 Clojure reader, assuming the changes are worthwhile and mostly
 backwards compatible. At present, I am most open to a HEREDOC or
 multiline string extension.
-
-## Current status
-
-* Lexer works with limitations -- see issues
-* Parser produces correct output on well-formed input
 
 ## Example
 
