@@ -182,11 +182,17 @@ void crntl_gettok(FILE *in,
       case '{': token->type = STARTSET; return;
       case '(': token->type = STARTFUNC; return;
       case '\'': token->type = VARQUOTE; return;
+      case ALPHA:
+	token->type = TAGVAL;
+	INSERT(token, wc);
+	state = INSYMBOL;
+	break;
       default:
 	TOKENIZER_ERROR("Found unknown character after octothorpe");
 	return;
       }
-
+      break;
+      
     case INTILDE:
       switch (wc) {
       case '@': token->type = UNQUOTESPLICE; return;
@@ -424,6 +430,13 @@ void crntl_freevalue(struct ParserValue *v) {
     free(v->content.boxed_value);
     break;
 
+  case TAGGED_VALUE:
+    crntl_freevalue(v->content.tagged.tag);
+    crntl_freevalue(v->content.tagged.value);
+    free(v->content.tagged.tag);
+    free(v->content.tagged.value);
+    break;
+    
   case END_VALUE:
     break;
   }
@@ -547,6 +560,39 @@ void crntl_read_box(FILE *in,
   }
 }
 
+void crntl_read_tagged(FILE *in,
+		       struct ParserValue *v,
+		       struct Token *t,
+		       struct TokenizerState *ts) {
+  v->content.tagged.tag = malloc(sizeof(struct ParserValue));
+  v->content.tagged.value = malloc(sizeof(struct ParserValue));
+  if (v->content.tagged.tag == NULL
+      || v->content.tagged.value == NULL) {
+    free(v->content.tagged.tag);
+    free(v->content.tagged.value);
+    v->type = ERROR_VALUE;
+    v->content.error_string = "Parser out of memory";
+    return;
+  }
+
+  v->content.tagged.tag->type = PRIMITIVE_VALUE;
+  v->content.tagged.tag->content.token.type = SYMBOLVAL;
+  v->content.tagged.tag->content.token.wcs = t->wcs;
+  v->content.tagged.tag->content.token.wcs_length = t->wcs_length;
+  t->type = ERROR;
+  t->wcs = NULL;
+  t->wcs_length = 0;
+  
+  crntl_read(in, v->content.tagged.value, ts);
+
+  if (v->content.tagged.value->type == ERROR_VALUE) {
+    free(v->content.tagged.tag);
+    free(v->content.tagged.value);
+    v->type = ERROR_VALUE;
+    v->content.error_string = "Unexpected token";
+  }
+}
+
 void crntl_read(FILE *in,
 		struct ParserValue *v,
 		struct TokenizerState *ts) {
@@ -625,6 +671,11 @@ void crntl_read(FILE *in,
     crntl_read_box(in, v, ts);
     break;
 
+  case TAGVAL:
+    v->type = TAGGED_VALUE;
+    crntl_read_tagged(in, v, &t, ts);
+    break;
+    
   default:
     crntl_ungettok(&t, ts);
     PARSE_ERROR(v, "Unexpected token"); break;

@@ -52,11 +52,7 @@ void pad(FILE *out, int depth) {
 #define DUMPBOX(LABEL)							\
   {									\
     fprintf(out, LABEL " value\n");					\
-    for(struct ParserSequenceItem *elem = v->content.head_item;		\
-	elem != NULL;							\
-	elem = elem->next) {						\
-      dumpval1(out, &elem->value.i, depth + 1);				\
-    }									\
+    dumpval1(out, v->content.boxed_value, depth + 1);			\
   }
 
 
@@ -72,6 +68,13 @@ void pad(FILE *out, int depth) {
       dumpval1(out, &elem->value.key_entry.v, depth + 2);		\
     }									\
  }									
+
+#define DUMPTAGGED()							\
+  {									\
+    fprintf(out, "Tagged value\n");					\
+    dumpval1(out, v->content.tagged.tag, depth + 1);			\
+    dumpval1(out, v->content.tagged.value, depth + 1);			\
+  }
 
 
 void dumpval1(FILE *out, struct ParserValue *v, int depth) {
@@ -97,12 +100,30 @@ void dumpval1(FILE *out, struct ParserValue *v, int depth) {
   case VECT_VALUE: DUMPSEQUENCE("Vect"); break;
     
   case DICT_VALUE: DUMPDICT(); break;      
+
+  case TAGGED_VALUE: DUMPTAGGED(); break;
     
-  case DEREF_VALUE: case QUASIQUOTE_VALUE:
-  case UNQUOTE_VALUE: case UNQUOTESPLICE_VALUE:
-  case META_VALUE: case VARQUOTE_VALUE: case QUOTE_VALUE: 
-    fprintf(out, "Boxed value\n");
-    break;      
+  case DEREF_VALUE:
+    DUMPBOX("Deref");
+    break;
+  case QUASIQUOTE_VALUE:
+    DUMPBOX("Quasiquote");
+    break;
+  case UNQUOTE_VALUE:
+    DUMPBOX("Unquote");
+    break;
+  case UNQUOTESPLICE_VALUE:
+    DUMPBOX("Unquote splice");
+    break;
+  case META_VALUE:
+    DUMPBOX("Meta");
+    break;
+  case VARQUOTE_VALUE:
+    DUMPBOX("Varquote");
+    break;
+  case QUOTE_VALUE: 
+    DUMPBOX("Quote");
+    break;
     
   case ERROR_VALUE:
     fprintf(out, "Error: %s\n", v->content.error_string);

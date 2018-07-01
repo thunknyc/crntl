@@ -38,7 +38,7 @@ enum TokenType
    VARQUOTE, DEREF, HAT,
    QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTESPLICE,
    INTVAL, FLOATVAL, SYMBOLVAL, KEYWORDVAL,
-   STRINGVAL, CHARVAL,
+   STRINGVAL, CHARVAL, TAGVAL,
 
    ENDOFINPUT, OUTOFMEMORY, ERROR
   };
@@ -58,10 +58,15 @@ struct TokenizerState {
 
 enum ParserValueType
   {
-   PRIMITIVE_VALUE, LIST_VALUE, SET_VALUE, VECT_VALUE,
-   DICT_VALUE, DEREF_VALUE, QUOTE_VALUE,
-   QUASIQUOTE_VALUE, UNQUOTE_VALUE, UNQUOTESPLICE_VALUE,
-   META_VALUE, VARQUOTE_VALUE, FUNC_VALUE,
+   PRIMITIVE_VALUE,
+
+   LIST_VALUE, SET_VALUE, VECT_VALUE, DICT_VALUE, FUNC_VALUE, 
+
+   DEREF_VALUE, QUOTE_VALUE, QUASIQUOTE_VALUE, UNQUOTE_VALUE,
+   UNQUOTESPLICE_VALUE, META_VALUE, VARQUOTE_VALUE,
+
+   TAGGED_VALUE,
+
    ERROR_VALUE, END_VALUE
   };
 
@@ -72,6 +77,10 @@ struct ParserValue {
     struct ParserValue *boxed_value;
     struct ParserSequenceItem *head_item;
     char *error_string;
+    struct {
+      struct ParserValue *tag;
+      struct ParserValue *value;
+    } tagged;
   } content;
 };
 
