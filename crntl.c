@@ -352,6 +352,7 @@ void crntl_gettok(FILE *in,
       case '*': case '!': case '_': case '?': case '$':
       case '%': case '&': case '=': case '<': case '>':
       case '+': case '-': case '.': case ':':
+      case '\'':
 	INSERT(token, wc);
 	break;
 
@@ -360,12 +361,14 @@ void crntl_gettok(FILE *in,
 	return;
       }
       break;
+
     case INTENTATIVESYMBOL:
       switch (wc) {
       case ALPHA:
       case '*': case '!': case '_': case '?': case '$':
       case '%': case '&': case '=': case '<': case '>':
       case '+': case '-': case '.': case ':':
+      case '\'':
 	state = INSYMBOL;
 	INSERT(token, wc);
 	break;
