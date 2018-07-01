@@ -192,7 +192,7 @@ void crntl_gettok(FILE *in,
 	return;
       }
       break;
-      
+
     case INTILDE:
       switch (wc) {
       case '@': token->type = UNQUOTESPLICE; return;
@@ -436,7 +436,7 @@ void crntl_freevalue(struct ParserValue *v) {
     free(v->content.tagged.tag);
     free(v->content.tagged.value);
     break;
-    
+
   case END_VALUE:
     break;
   }
@@ -582,7 +582,7 @@ void crntl_read_tagged(FILE *in,
   t->type = ERROR;
   t->wcs = NULL;
   t->wcs_length = 0;
-  
+
   crntl_read(in, v->content.tagged.value, ts);
 
   if (v->content.tagged.value->type == ERROR_VALUE) {
@@ -675,7 +675,7 @@ void crntl_read(FILE *in,
     v->type = TAGGED_VALUE;
     crntl_read_tagged(in, v, &t, ts);
     break;
-    
+
   default:
     crntl_ungettok(&t, ts);
     PARSE_ERROR(v, "Unexpected token"); break;
