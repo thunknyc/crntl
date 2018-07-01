@@ -32,48 +32,48 @@ void pad(FILE *out, int depth) {
   for(int i = 0; i < depth; i++) fputc('.', out);
 }
 
-#define DUMPPRIMITIVE(LABEL)			\
-  {						\
-    fprintf(out, LABEL " value: ");		\
-    fputws(v->content.token.wcs, out);		\
-    fputs("\n", out);				\
+#define DUMPPRIMITIVE(LABEL)                    \
+  {                                             \
+    fprintf(out, LABEL " value: ");             \
+    fputws(v->content.token.wcs, out);          \
+    fputs("\n", out);                           \
   }
 
-#define DUMPSEQUENCE(LABEL)						\
-  {									\
-    fprintf(out, LABEL " value\n");					\
-    for(struct ParserSequenceItem *elem = v->content.head_item;		\
-	elem != NULL;							\
-	elem = elem->next) {						\
-      dumpval1(out, &elem->value.i, depth + 1);				\
-    }									\
+#define DUMPSEQUENCE(LABEL)                                             \
+  {                                                                     \
+    fprintf(out, LABEL " value\n");                                     \
+    for(struct ParserSequenceItem *elem = v->content.head_item;         \
+        elem != NULL;                                                   \
+        elem = elem->next) {                                            \
+      dumpval1(out, &elem->value.i, depth + 1);                         \
+    }                                                                   \
   }
 
-#define DUMPBOX(LABEL)							\
-  {									\
-    fprintf(out, LABEL " value\n");					\
-    dumpval1(out, v->content.boxed_value, depth + 1);			\
+#define DUMPBOX(LABEL)                                                  \
+  {                                                                     \
+    fprintf(out, LABEL " value\n");                                     \
+    dumpval1(out, v->content.boxed_value, depth + 1);                   \
   }
 
 
-#define DUMPDICT()							\
-  {									\
-    fprintf(out, "Dictionary value\n");					\
-    for(struct ParserSequenceItem *elem = v->content.head_item;		\
-	elem != NULL;							\
-	elem = elem->next) {						\
-      pad(out, depth);							\
-      fprintf(out, ".Entry:\n");					\
-      dumpval1(out, &elem->value.key_entry.k, depth + 2);		\
-      dumpval1(out, &elem->value.key_entry.v, depth + 2);		\
-    }									\
+#define DUMPDICT()                                                      \
+  {                                                                     \
+    fprintf(out, "Dictionary value\n");                                 \
+    for(struct ParserSequenceItem *elem = v->content.head_item;         \
+        elem != NULL;                                                   \
+        elem = elem->next) {                                            \
+      pad(out, depth);                                                  \
+      fprintf(out, ".Entry:\n");                                        \
+      dumpval1(out, &elem->value.key_entry.k, depth + 2);               \
+      dumpval1(out, &elem->value.key_entry.v, depth + 2);               \
+    }                                                                   \
   }
 
-#define DUMPTAGGED()							\
-  {									\
-    fprintf(out, "Tagged value\n");					\
-    dumpval1(out, v->content.tagged.tag, depth + 1);			\
-    dumpval1(out, v->content.tagged.value, depth + 1);			\
+#define DUMPTAGGED()                                                    \
+  {                                                                     \
+    fprintf(out, "Tagged value\n");                                     \
+    dumpval1(out, v->content.tagged.tag, depth + 1);                    \
+    dumpval1(out, v->content.tagged.value, depth + 1);                  \
   }
 
 

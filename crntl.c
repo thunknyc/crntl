@@ -47,41 +47,41 @@ void crntl_freetok(struct Token token) {
   token.wcs_length = 0;
 }
 
-#define INSERT(TOKPTR, WC)						\
-  { TOKPTR->wcs = realloc(TOKPTR->wcs,					\
-			  sizeof(wchar_t) * (TOKPTR->wcs_length + 1));	\
-    if (TOKPTR->wcs == NULL) {						\
-      TOKPTR->type = OUTOFMEMORY;					\
-      TOKPTR->wcs = 0;							\
-      return;								\
-    }									\
-    TOKPTR->wcs[TOKPTR->wcs_length++] = WC;				\
+#define INSERT(TOKPTR, WC)                                              \
+  { TOKPTR->wcs = realloc(TOKPTR->wcs,                                  \
+                          sizeof(wchar_t) * (TOKPTR->wcs_length + 1));  \
+    if (TOKPTR->wcs == NULL) {                                          \
+      TOKPTR->type = OUTOFMEMORY;                                       \
+      TOKPTR->wcs = 0;                                                  \
+      return;                                                           \
+    }                                                                   \
+    TOKPTR->wcs[TOKPTR->wcs_length++] = WC;                             \
   }
 
-#define WHITESPACE					\
+#define WHITESPACE                                      \
   ' ': case '\t': case '\n': case '\f': case ','
 
-#define ALPHA						\
-  'A': case 'B': case 'C': case 'D': case 'E':		\
-  case 'F': case 'G': case 'H': case 'I': case 'J':	\
-  case 'K': case 'L': case 'M': case 'N': case 'O':	\
-  case 'P': case 'Q': case 'R': case 'S': case 'T':	\
-  case 'U': case 'V': case 'W': case 'X': case 'Y':	\
-  case 'Z':						\
-  case 'a': case 'b': case 'c': case 'd': case 'e':	\
-  case 'f': case 'g': case 'h': case 'i': case 'j':	\
-  case 'k': case 'l': case 'm': case 'n': case 'o':	\
-  case 'p': case 'q': case 'r': case 's': case 't':	\
-  case 'u': case 'v': case 'w': case 'x': case 'y':	\
+#define ALPHA                                           \
+  'A': case 'B': case 'C': case 'D': case 'E':          \
+  case 'F': case 'G': case 'H': case 'I': case 'J':     \
+  case 'K': case 'L': case 'M': case 'N': case 'O':     \
+  case 'P': case 'Q': case 'R': case 'S': case 'T':     \
+  case 'U': case 'V': case 'W': case 'X': case 'Y':     \
+  case 'Z':                                             \
+  case 'a': case 'b': case 'c': case 'd': case 'e':     \
+  case 'f': case 'g': case 'h': case 'i': case 'j':     \
+  case 'k': case 'l': case 'm': case 'n': case 'o':     \
+  case 'p': case 'q': case 'r': case 's': case 't':     \
+  case 'u': case 'v': case 'w': case 'x': case 'y':     \
   case 'z'
 
-#define NUMERIC						\
-  '0': case '1': case '2': case '3': case '4':			\
+#define NUMERIC                                                 \
+  '0': case '1': case '2': case '3': case '4':                  \
   case '5': case '6': case '7': case '8': case '9'
 
 
 void crntl_ungettok(struct Token *token,
-		    struct TokenizerState *tokenizer_state) {
+                    struct TokenizerState *tokenizer_state) {
   assert(!tokenizer_state->is_token_saved);
   tokenizer_state->is_token_saved = 1;
   tokenizer_state->token = *token;
@@ -91,23 +91,23 @@ void crntl_ungettok(struct Token *token,
 }
 
 #define TOKENIZER_ERROR(MSG) \
-  {			     \
+  {                          \
     token->type = ERROR;     \
-    free(token->wcs);	     \
-    token->wcs = NULL;	     \
+    free(token->wcs);        \
+    token->wcs = NULL;       \
     token->wcs_length = 0;   \
   }
 
-#define REWIND()				\
-  {						\
-    tokenizer_state->column--;			\
-    ungetwc(wc, in);				\
-    INSERT(token, '\0');			\
+#define REWIND()                                \
+  {                                             \
+    tokenizer_state->column--;                  \
+    ungetwc(wc, in);                            \
+    INSERT(token, '\0');                        \
   }
 
 void crntl_gettok(FILE *in,
-		  struct Token *token,
-		  struct TokenizerState *tokenizer_state) {
+                  struct Token *token,
+                  struct TokenizerState *tokenizer_state) {
 
   if (tokenizer_state->is_token_saved) {
     tokenizer_state->is_token_saved = 0;
@@ -136,8 +136,8 @@ void crntl_gettok(FILE *in,
       case ':': token->type = KEYWORDVAL; state = INSYMBOL; break;
 
       case '\n': case '\f':
-	tokenizer_state->line++; tokenizer_state->column = -1;
-	// fall through and...
+        tokenizer_state->line++; tokenizer_state->column = -1;
+        // fall through and...
       case ' ': case '\t': case ',': break; // ..eat whitespace
 
       case '(': token->type = STARTLIST; return;
@@ -154,26 +154,26 @@ void crntl_gettok(FILE *in,
       case ALPHA:
       case '*': case '!': case '_': case '?': case '$':
       case '%': case '&': case '=': case '<': case '>':
-	token->type = SYMBOLVAL;
-	state = INSYMBOL;
-	INSERT(token, wc);
-	break;
+        token->type = SYMBOLVAL;
+        state = INSYMBOL;
+        INSERT(token, wc);
+        break;
 
       case '+': case '-': case '.':
-	token->type = SYMBOLVAL;
-	INSERT(token, wc);
-	state = INTENTATIVESYMBOL;
-	break;
+        token->type = SYMBOLVAL;
+        INSERT(token, wc);
+        state = INTENTATIVESYMBOL;
+        break;
 
       case NUMERIC:
-	token->type = INTVAL;
-	state = INNUMERICVAL;
-	INSERT(token, wc);
-	break;
+        token->type = INTVAL;
+        state = INNUMERICVAL;
+        INSERT(token, wc);
+        break;
 
       default:
-	TOKENIZER_ERROR("Found unknown character")
-	return;
+        TOKENIZER_ERROR("Found unknown character")
+        return;
       }
       break;
 
@@ -183,13 +183,13 @@ void crntl_gettok(FILE *in,
       case '(': token->type = STARTFUNC; return;
       case '\'': token->type = VARQUOTE; return;
       case ALPHA:
-	token->type = TAGVAL;
-	INSERT(token, wc);
-	state = INSYMBOL;
-	break;
+        token->type = TAGVAL;
+        INSERT(token, wc);
+        state = INSYMBOL;
+        break;
       default:
-	TOKENIZER_ERROR("Found unknown character after octothorpe");
-	return;
+        TOKENIZER_ERROR("Found unknown character after octothorpe");
+        return;
       }
       break;
 
@@ -197,39 +197,39 @@ void crntl_gettok(FILE *in,
       switch (wc) {
       case '@': token->type = UNQUOTESPLICE; return;
       default:
-	tokenizer_state->column--;
-	ungetwc(wc, in);
-	token->type = UNQUOTE;
-	return;
+        tokenizer_state->column--;
+        ungetwc(wc, in);
+        token->type = UNQUOTE;
+        return;
       }
       break;
 
     case INSTRING:
       switch (wc) {
       case '"':
-	INSERT(token, '\0');
-	return;
+        INSERT(token, '\0');
+        return;
       case '\\':
-	state = INSTRINGESCAPE;
-	INSERT(token, '\\');
-	break;
+        state = INSTRINGESCAPE;
+        INSERT(token, '\\');
+        break;
       default:
-	INSERT(token, wc);
-	break;
+        INSERT(token, wc);
+        break;
       }
       break;
 
     case INSTRINGESCAPE:
       switch (wc) {
       case '"': case '\\':
-	state = INSTRING;
-	INSERT(token, wc);
-	break;
+        state = INSTRING;
+        INSERT(token, wc);
+        break;
       default:
-	// Need to sort out legal from illegal escape chars.
-	state = INSTRING;
-	INSERT(token, wc);
-	break;
+        // Need to sort out legal from illegal escape chars.
+        state = INSTRING;
+        INSERT(token, wc);
+        break;
       }
       break;
 
@@ -238,16 +238,16 @@ void crntl_gettok(FILE *in,
       case ALPHA:
       case '*': case '!': case '_': case '?': case '$':
       case '%': case '&': case '=': case '<': case '>':
-	token->type = KEYWORDVAL;
-	state = INSYMBOL;
-	INSERT(token, wc);
-	break;
+        token->type = KEYWORDVAL;
+        state = INSYMBOL;
+        INSERT(token, wc);
+        break;
 
       case '+': case '-': case '.':
-	token->type = KEYWORDVAL;
-	state = INTENTATIVESYMBOL;
-	INSERT(token, wc);
-	break;
+        token->type = KEYWORDVAL;
+        state = INTENTATIVESYMBOL;
+        INSERT(token, wc);
+        break;
       }
       break;
 
@@ -256,93 +256,93 @@ void crntl_gettok(FILE *in,
       case NUMERIC: INSERT(token, wc); break;
 
       case '.':
-	// Promote to float
-	token->type = FLOATVAL;
-	INSERT(token, wc);
-	break;
+        // Promote to float
+        token->type = FLOATVAL;
+        INSERT(token, wc);
+        break;
 
       case 'e': case 'E':
-	// Promote to float
-	token->type = FLOATVAL;
-	state = INEXPONENT;
-	INSERT(token, wc);
-	break;
+        // Promote to float
+        token->type = FLOATVAL;
+        state = INEXPONENT;
+        INSERT(token, wc);
+        break;
 
       default:
-	tokenizer_state->column--;
-	ungetwc(wc, in);
-	INSERT(token, '\0');
-	return;
+        tokenizer_state->column--;
+        ungetwc(wc, in);
+        INSERT(token, '\0');
+        return;
       }
       break;
 
     case INEXPONENT:
       switch (wc) {
       case '-': case '+':
-	state = INEXPONENTFIRSTDIGIT;
-	INSERT(token, wc);
-	break;
+        state = INEXPONENTFIRSTDIGIT;
+        INSERT(token, wc);
+        break;
 
       case NUMERIC:
-	state = INEXPONENTDIGITS;
-	INSERT(token, wc);
-	break;
+        state = INEXPONENTDIGITS;
+        INSERT(token, wc);
+        break;
 
       default:
-	TOKENIZER_ERROR("Needed a sign or digit")
-	return;
+        TOKENIZER_ERROR("Needed a sign or digit")
+        return;
       }
       break;
 
     case INEXPONENTFIRSTDIGIT:
       switch (wc) {
       case NUMERIC:
-	state = INEXPONENTDIGITS;
-	INSERT(token, wc);
-	break;
+        state = INEXPONENTDIGITS;
+        INSERT(token, wc);
+        break;
       default:
-	TOKENIZER_ERROR("Needed an exponent digit")
-	return;
+        TOKENIZER_ERROR("Needed an exponent digit")
+        return;
       }
       break;
 
     case INEXPONENTDIGITS:
       switch (wc) {
       case NUMERIC:
-	INSERT(token, wc);
-	break;
+        INSERT(token, wc);
+        break;
 
       default:
-	tokenizer_state->column--;
-	ungetwc(wc, in);
-	INSERT(token, '\0');
-	return;
+        tokenizer_state->column--;
+        ungetwc(wc, in);
+        INSERT(token, '\0');
+        return;
       }
       break;
 
     case INCHAR:
       switch (wc) {
       case ' ': case '\t': case '\n': case '\f':
-	TOKENIZER_ERROR("Needed a visible character");
-	return;
+        TOKENIZER_ERROR("Needed a visible character");
+        return;
       default:
-	state = INCHAR2;
-	INSERT(token, wc);
-	break;
+        state = INCHAR2;
+        INSERT(token, wc);
+        break;
       }
       break;
 
     case INCHAR2:
       switch (wc) {
       case WHITESPACE:
-	REWIND();
-	return;
+        REWIND();
+        return;
       case ALPHA:
-	INSERT(token, wc);
-	break;
+        INSERT(token, wc);
+        break;
       default:
-	REWIND();
-	return;
+        REWIND();
+        return;
       }
       break;
 
@@ -353,12 +353,12 @@ void crntl_gettok(FILE *in,
       case '%': case '&': case '=': case '<': case '>':
       case '+': case '-': case '.': case ':':
       case '\'':
-	INSERT(token, wc);
-	break;
+        INSERT(token, wc);
+        break;
 
       default:
-	REWIND();
-	return;
+        REWIND();
+        return;
       }
       break;
 
@@ -369,29 +369,29 @@ void crntl_gettok(FILE *in,
       case '%': case '&': case '=': case '<': case '>':
       case '+': case '-': case '.': case ':':
       case '\'':
-	state = INSYMBOL;
-	INSERT(token, wc);
-	break;
+        state = INSYMBOL;
+        INSERT(token, wc);
+        break;
 
       case NUMERIC:
-	// Oops, no, we're really in a number
-	token->type = token->wcs[0] == '.' ? FLOATVAL : INTVAL;
-	state = INNUMERICVAL;
-	INSERT(token, wc);
-	break;
+        // Oops, no, we're really in a number
+        token->type = token->wcs[0] == '.' ? FLOATVAL : INTVAL;
+        state = INNUMERICVAL;
+        INSERT(token, wc);
+        break;
 
       default:
-	REWIND();
-	return;
+        REWIND();
+        return;
       }
     }
   }
 }
 
-#define PARSE_ERROR(V, S)			\
-  {						\
-    V->type = ERROR_VALUE;			\
-    V->content.error_string = S;		\
+#define PARSE_ERROR(V, S)                       \
+  {                                             \
+    V->type = ERROR_VALUE;                      \
+    V->content.error_string = S;                \
   }
 
 
@@ -409,8 +409,8 @@ void crntl_freevalue(struct ParserValue *v) {
     {
       struct ParserSequenceItem *head = v->content.head_item;
       while (head != NULL) {
-	crntl_freevalue(&head->value.i);
-	head = head->next;
+        crntl_freevalue(&head->value.i);
+        head = head->next;
       }
     }
     break;
@@ -419,9 +419,9 @@ void crntl_freevalue(struct ParserValue *v) {
     {
       struct ParserSequenceItem *head = v->content.head_item;
       while (head != NULL) {
-	crntl_freevalue(&head->value.key_entry.k);
-	crntl_freevalue(&head->value.key_entry.v);
-	head = head->next;
+        crntl_freevalue(&head->value.key_entry.k);
+        crntl_freevalue(&head->value.key_entry.v);
+        head = head->next;
       }
     }
     break;
@@ -446,9 +446,9 @@ void crntl_freevalue(struct ParserValue *v) {
 }
 
 void crntl_read_list(FILE *in,
-		     struct ParserValue *v,
-		     struct TokenizerState *ts,
-		     enum TokenType end_type) {
+                     struct ParserValue *v,
+                     struct TokenizerState *ts,
+                     enum TokenType end_type) {
 
   struct ParserSequenceItem *parent = NULL;
   struct ParserSequenceItem *tail = malloc(sizeof(struct ParserSequenceItem));
@@ -472,15 +472,15 @@ void crntl_read_list(FILE *in,
     if (tail->value.i.type == ERROR_VALUE) {
       crntl_gettok(in, &t, ts);
       if (t.type != end_type) {
-	crntl_freevalue(v);
-	v->type = ERROR_VALUE;
-	v->content.error_string = "Unexpected token";
+        crntl_freevalue(v);
+        v->type = ERROR_VALUE;
+        v->content.error_string = "Unexpected token";
       } else if (parent != NULL) {
-	free(parent->next);
-	parent->next = NULL;
+        free(parent->next);
+        parent->next = NULL;
       } else {
-	free(v->content.head_item);
-	v->content.head_item = NULL;
+        free(v->content.head_item);
+        v->content.head_item = NULL;
       }
       return;
     }
@@ -492,8 +492,8 @@ void crntl_read_list(FILE *in,
 }
 
 void crntl_read_dict(FILE *in,
-		     struct ParserValue *v,
-		     struct TokenizerState *ts) {
+                     struct ParserValue *v,
+                     struct TokenizerState *ts) {
 
   struct ParserSequenceItem *parent = NULL;
   struct ParserSequenceItem *tail = malloc(sizeof(struct ParserSequenceItem));
@@ -516,15 +516,15 @@ void crntl_read_dict(FILE *in,
     if (tail->value.key_entry.k.type == ERROR_VALUE) {
       crntl_gettok(in, &t, ts);
       if (t.type != ENDDICT) {
-	crntl_freevalue(v);
-	v->type = ERROR_VALUE;
-	v->content.error_string = "Unexpected token while looking for key";
+        crntl_freevalue(v);
+        v->type = ERROR_VALUE;
+        v->content.error_string = "Unexpected token while looking for key";
       } else if (parent != NULL) {
-	free(parent->next);
-	parent->next = NULL;
+        free(parent->next);
+        parent->next = NULL;
       } else {
-	free(v->content.head_item);
-	v->content.head_item = NULL;
+        free(v->content.head_item);
+        v->content.head_item = NULL;
       }
       return;
     }
@@ -545,8 +545,8 @@ void crntl_read_dict(FILE *in,
 }
 
 void crntl_read_box(FILE *in,
-		    struct ParserValue *v,
-		    struct TokenizerState *ts) {
+                    struct ParserValue *v,
+                    struct TokenizerState *ts) {
   v->content.boxed_value = malloc(sizeof(struct ParserValue));
   if (v->content.boxed_value == NULL) {
       v->type = ERROR_VALUE;
@@ -564,9 +564,9 @@ void crntl_read_box(FILE *in,
 }
 
 void crntl_read_tagged(FILE *in,
-		       struct ParserValue *v,
-		       struct Token *t,
-		       struct TokenizerState *ts) {
+                       struct ParserValue *v,
+                       struct Token *t,
+                       struct TokenizerState *ts) {
   v->content.tagged.tag = malloc(sizeof(struct ParserValue));
   v->content.tagged.value = malloc(sizeof(struct ParserValue));
   if (v->content.tagged.tag == NULL
@@ -597,8 +597,8 @@ void crntl_read_tagged(FILE *in,
 }
 
 void crntl_read(FILE *in,
-		struct ParserValue *v,
-		struct TokenizerState *ts) {
+                struct ParserValue *v,
+                struct TokenizerState *ts) {
 
   struct Token t;
 

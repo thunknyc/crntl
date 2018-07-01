@@ -99,7 +99,7 @@ void crntl_state_init(struct TokenizerState *tokenizer_state);
 void crntl_freetok(struct Token token);
 
 void crntl_read(FILE *in, struct ParserValue *v,
-		struct TokenizerState *ts);
+                struct TokenizerState *ts);
 
 void crntl_freevalue(struct ParserValue *v);
 
