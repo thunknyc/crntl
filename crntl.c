@@ -601,7 +601,6 @@ void crntl_read(FILE *in,
 		struct TokenizerState *ts) {
 
   struct Token t;
-  struct ParserSequenceItem **current = &(v->content.head_item);
 
   v->content.head_item = NULL;
 
