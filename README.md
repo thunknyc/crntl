@@ -4,7 +4,7 @@
 
 * Assumes UTF-8, newline line endings
 * Symbols, keywords must be ASCII
-* tagged literals are supported
+* Tagged literals are supported
 * Parser produces (AFAIK) correct output on well-formed input
 * `main.c` contains a sample usage of the parser
 
