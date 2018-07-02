@@ -7,6 +7,7 @@
 * Tagged literals are supported
 * Parser produces (AFAIK) correct output on well-formed input
 * `main.c` contains a sample usage of the parser
+* There exists an [iOS framework](https://github.com/thunknyc/crntl-ios) for using CRNTL in Swift.
 
 ## Introduction
 
