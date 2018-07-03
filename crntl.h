@@ -71,17 +71,18 @@ enum ParserValueType
   };
 
 struct ParserValue {
-  enum ParserValueType type;
-  union {
-    struct Token token;
-    struct ParserValue *boxed_value;
-    struct ParserSequenceItem *head_item;
-    char *error_string;
-    struct {
-      struct ParserValue *tag;
-      struct ParserValue *value;
-    } tagged;
-  } content;
+    enum ParserValueType type;
+    union {
+        struct Token token;
+        struct ParserValue *boxed_value;
+        struct ParserSequenceItem *head_item;
+        char *error_string;
+        struct {
+            struct ParserValue *tag;
+            struct ParserValue *value;
+        } tagged;
+    } content;
+    struct TokenizerState state;
 };
 
 struct ParserSequenceItem {

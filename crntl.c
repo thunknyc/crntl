@@ -33,7 +33,8 @@ enum TokenizerReadState
     START, INOCTO, INKEYWORD, INTILDE,
     INNUMERICVAL, INEXPONENT, INEXPONENTFIRSTDIGIT,
     INEXPONENTDIGITS, INSYMBOL, INTENTATIVESYMBOL,
-    INSTRING, INSTRINGESCAPE, INCHAR, INCHAR2
+    INSTRING, INSTRINGESCAPE, INCHAR, INCHAR2,
+    INCOMMENT
 };
 
 void crntl_state_init(struct TokenizerState *tokenizer_state) {
@@ -129,11 +130,14 @@ void crntl_gettok(FILE *in,
             case START:
                 switch (wc) {
                     case WEOF: token->type = ENDOFINPUT; return;
+
+                    case ';': state = INCOMMENT; break;
+
                     case '\\': state = INCHAR; token->type = CHARVAL; break;
                     case '"': state = INSTRING; token->type = STRINGVAL; break;
                     case '#': state = INOCTO; break;
                     case '~': state = INTILDE; break;
-                    case ':': token->type = KEYWORDVAL; state = INSYMBOL; break;
+                    case ':': token->type = KEYWORDVAL; state = INKEYWORD; break;
 
                     case '\n': case '\f':
                         tokenizer_state->line++; tokenizer_state->column = -1;
@@ -154,6 +158,7 @@ void crntl_gettok(FILE *in,
                     case ALPHA:
                     case '*': case '!': case '_': case '?': case '$':
                     case '%': case '&': case '=': case '<': case '>':
+                    case '/':
                         token->type = SYMBOLVAL;
                         state = INSYMBOL;
                         INSERT(token, wc);
@@ -174,6 +179,19 @@ void crntl_gettok(FILE *in,
                     default:
                         TOKENIZER_ERROR("Found unknown character")
                         return;
+                }
+                break;
+
+            case INCOMMENT:
+                switch (wc) {
+                    case '\n': case '\f':
+                        state = START;
+                        break;
+
+                    case WEOF: token->type = ENDOFINPUT; return;
+
+                    default:
+                        break;
                 }
                 break;
 
@@ -213,6 +231,9 @@ void crntl_gettok(FILE *in,
                         state = INSTRINGESCAPE;
                         INSERT(token, '\\');
                         break;
+                    case WEOF:
+                        TOKENIZER_ERROR("Unexpected end of input in string");
+                        return;
                     default:
                         INSERT(token, wc);
                         break;
@@ -225,6 +246,8 @@ void crntl_gettok(FILE *in,
                         state = INSTRING;
                         INSERT(token, wc);
                         break;
+                    case WEOF:
+                        TOKENIZER_ERROR("Unexpected end of input in string escape")
                     default:
                         // Need to sort out legal from illegal escape chars.
                         state = INSTRING;
@@ -238,16 +261,22 @@ void crntl_gettok(FILE *in,
                     case ALPHA:
                     case '*': case '!': case '_': case '?': case '$':
                     case '%': case '&': case '=': case '<': case '>':
-                        token->type = KEYWORDVAL;
+                    case '/':
                         state = INSYMBOL;
                         INSERT(token, wc);
                         break;
 
                     case '+': case '-': case '.':
-                        token->type = KEYWORDVAL;
                         state = INTENTATIVESYMBOL;
                         INSERT(token, wc);
                         break;
+
+                    default:
+                        REWIND();
+                        if (token->wcs_length == 1) {
+                            TOKENIZER_ERROR("Needed a character for keyword");
+                        }
+                        return;
                 }
                 break;
 
@@ -352,6 +381,7 @@ void crntl_gettok(FILE *in,
                     case '*': case '!': case '_': case '?': case '$':
                     case '%': case '&': case '=': case '<': case '>':
                     case '+': case '-': case '.': case ':':
+                    case '/':
                     case '\'':
                         INSERT(token, wc);
                         break;
@@ -391,14 +421,14 @@ void crntl_gettok(FILE *in,
 #define PARSE_ERROR(V, S)                       \
 {                                             \
 V->type = ERROR_VALUE;                      \
-V->content.error_string = S;                \
+V->content.error_string = S; \
+v->state = *ts; \
 }
 
 
 void crntl_freevalue(struct ParserValue *v) {
     switch (v->type) {
         case ERROR_VALUE:
-            // free(v->content.error_string); All error strings are static.
             break;
 
         case PRIMITIVE_VALUE:
@@ -462,6 +492,7 @@ void crntl_read_list(FILE *in,
             crntl_freevalue(v);
             v->type = ERROR_VALUE;
             v->content.error_string = "Parser out of memory in sequence";
+            v->state = *ts;
             return;
         }
 
@@ -482,6 +513,7 @@ void crntl_read_list(FILE *in,
                 free(v->content.head_item);
                 v->content.head_item = NULL;
             }
+            v->state = *ts;
             return;
         }
 
@@ -489,12 +521,14 @@ void crntl_read_list(FILE *in,
             crntl_freevalue(v);
             v->type = ERROR_VALUE;
             v->content.error_string = "End of input while in sequence";
+            v->state = *ts;
             return;
         }
 
         tail->next = malloc(sizeof(struct ParserSequenceItem));
         parent = tail;
         tail = tail->next;
+        v->state = *ts;
     }
 }
 
@@ -513,6 +547,7 @@ void crntl_read_dict(FILE *in,
             crntl_freevalue(v);
             v->type = ERROR_VALUE;
             v->content.error_string = "Parser out of memory in dictionary";
+            v->state = *ts;
             return;
         }
 
@@ -534,6 +569,7 @@ void crntl_read_dict(FILE *in,
                 free(v->content.head_item);
                 v->content.head_item = NULL;
             }
+            v->state = *ts;
             return;
         }
 
@@ -542,6 +578,7 @@ void crntl_read_dict(FILE *in,
             crntl_freevalue(v);
             v->type = ERROR_VALUE;
             v->content.error_string = "End of input while looking for key in dicxtionary";
+            v->state = *ts;
             return;
         }
 
@@ -551,6 +588,7 @@ void crntl_read_dict(FILE *in,
             crntl_freevalue(v);
             v->type = ERROR_VALUE;
             v->content.error_string = "Unexpected token while looking for value in dictionary";
+            v->state = *ts;
             return;
         }
 
@@ -558,12 +596,14 @@ void crntl_read_dict(FILE *in,
             crntl_freevalue(v);
             v->type = ERROR_VALUE;
             v->content.error_string = "End of input while looking for value in dicxtionary";
+            v->state = *ts;
             return;
         }
 
         tail->next = malloc(sizeof(struct ParserSequenceItem));
         parent = tail;
         tail = tail->next;
+        v->state = *ts;
     }
 }
 
@@ -574,6 +614,7 @@ void crntl_read_box(FILE *in,
     if (v->content.boxed_value == NULL) {
         v->type = ERROR_VALUE;
         v->content.error_string = "Parser out of memory";
+        v->state = *ts;
         return;
     }
 
@@ -583,6 +624,7 @@ void crntl_read_box(FILE *in,
         free(v->content.boxed_value);
         v->type = ERROR_VALUE;
         v->content.error_string = "Unexpected token";
+        v->state = *ts;
     }
 }
 
@@ -598,6 +640,7 @@ void crntl_read_tagged(FILE *in,
         free(v->content.tagged.value);
         v->type = ERROR_VALUE;
         v->content.error_string = "Parser out of memory";
+        v->state = *ts;
         return;
     }
 
@@ -617,6 +660,7 @@ void crntl_read_tagged(FILE *in,
         v->type = ERROR_VALUE;
         v->content.error_string = "Unexpected token";
     }
+    v->state = *ts;
 }
 
 void crntl_read(FILE *in,
@@ -635,12 +679,13 @@ void crntl_read(FILE *in,
             PARSE_ERROR(v, "Lexer out of memory"); break;
 
         case ENDOFINPUT:
-            v->type = END_VALUE; break;
+            v->type = END_VALUE; v->state = *ts; break;
 
         case INTVAL: case FLOATVAL: case SYMBOLVAL: case KEYWORDVAL:
         case STRINGVAL: case CHARVAL:
             v->type = PRIMITIVE_VALUE;
             v->content.token = t;
+            v->state = *ts;
             break;
 
         case STARTLIST:
