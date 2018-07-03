@@ -200,6 +200,8 @@ void crntl_gettok(FILE *in,
                     case '{': token->type = STARTSET; return;
                     case '(': token->type = STARTFUNC; return;
                     case '\'': token->type = VARQUOTE; return;
+                    case '_': token->type = IGNOREDVAL; return;
+
                     case ALPHA:
                         token->type = TAGVAL;
                         INSERT(token, wc);
@@ -742,6 +744,15 @@ void crntl_read(FILE *in,
         case TAGVAL:
             v->type = TAGGED_VALUE;
             crntl_read_tagged(in, v, &t, ts);
+            break;
+
+        case IGNOREDVAL:
+            {
+                struct ParserValue ignored;
+                crntl_read_box(in, &ignored, ts);
+                crntl_freevalue(&ignored);
+            }
+            return crntl_read(in, v, ts);
             break;
 
         default:

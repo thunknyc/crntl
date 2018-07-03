@@ -4,8 +4,8 @@
 
 * Assumes UTF-8, newline line endings
 * Symbols, keywords must be ASCII
-* Tagged literals are supported...
-* ...But discard-next (`#_`) is currently not
+* Tagged literals are supported
+* Discard-nexr (`#_`) is supported
 * Comments are parsed (and ignored)
 * Each parsed value contains tokenizer state including line and column
 * Parser produces (AFAIK) correct output on well-formed input
