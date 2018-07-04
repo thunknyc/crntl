@@ -2,6 +2,7 @@
 
 ## Current status
 
+* No dependencies outside of C standard libraries
 * Assumes UTF-8, newline line endings; `wchar_t` is used throughout
 * Symbols and keywords must currently be ASCII
 * Comments are parsed (and ignored)
