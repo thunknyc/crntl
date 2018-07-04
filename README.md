@@ -12,7 +12,7 @@
 * `main.c` contains a sample usage of the parser
 * There exists an [iOS framework](https://github.com/thunknyc/crntl-ios) for using CRNTL in Swift. It is currently being used in Thunk NYC Corp.'s computational notebook app:
 
-![img_0554](https://user-images.githubusercontent.com/85875/42279473-e007ad36-7f6b-11e8-9930-6cf04b547178.jpg)
+![img_0554](https://user-images.githubusercontent.com/85875/42279604-544af52c-7f6c-11e8-8491-15d995c32a33.jpg)
 
 ## Background
 
