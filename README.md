@@ -10,9 +10,11 @@
 * Each parsed value contains tokenizer state including line and column
 * Parser produces (AFAIK) correct output on well-formed input
 * `main.c` contains a sample usage of the parser
-* There exists an [iOS framework](https://github.com/thunknyc/crntl-ios) for using CRNTL in Swift.
+* There exists an [iOS framework](https://github.com/thunknyc/crntl-ios) for using CRNTL in Swift. It is currently being used in Thunk NYC Corp.'s computational notebook app:
 
-## Introduction
+![img_0554](https://user-images.githubusercontent.com/85875/42279473-e007ad36-7f6b-11e8-9930-6cf04b547178.jpg)
+
+## Background
 
 My attraction to Clojure back in '09 was based on several
 things. First, there were some killer apps i.e. Incanter and
