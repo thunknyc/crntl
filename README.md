@@ -9,6 +9,7 @@
 * Tagged literals and discard-next-value (`#_`) are supported
 * Each parsed value contains tokenizer state including line and column
 * Parser produces (AFAIK) correct output on well-formed input
+* Pretty decent error reporting
 * A sample usage of the parser is in `main.c`; Makefile builds it as `crntl`
 * On macOS, `crntl.o` builds to just under 20K (apologies for the bloat)
 * There exists an [iOS framework](https://github.com/thunknyc/crntl-ios) for using CRNTL in Swift. It is currently being used in Thunk NYC Corp.'s computational notebook app:
