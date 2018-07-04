@@ -112,7 +112,7 @@ void dumpval1(FILE *out, struct ParserValue *v, int depth) {
   case QUOTE_VALUE: DUMPBOX("Quote"); break;
 
   case ERROR_VALUE:
-    fprintf(out, "Error: %s\n", v->content.error_string);
+    fwprintf(out, L"Error: %ls\n", v->content.error.string);
     break;
 
   case END_VALUE:
