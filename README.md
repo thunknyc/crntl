@@ -14,6 +14,7 @@
 * On macOS, `crntl.o` builds to just under 20K (apologies for the bloat)
 * There exists an [iOS framework](https://github.com/thunknyc/crntl-ios) for using CRNTL in Swift. It is currently being used in Thunk NYC Corp.'s computational notebook app:
 
+<img src="https://user-images.githubusercontent.com/85875/42279604-544af52c-7f6c-11e8-8491-15d995c32a33.jpg" width="320">
 ![img_0554](https://user-images.githubusercontent.com/85875/42279604-544af52c-7f6c-11e8-8491-15d995c32a33.jpg)
 
 ## Background
