@@ -2,14 +2,14 @@
 
 ## Current status
 
-* Assumes UTF-8, newline line endings
-* Symbols, keywords must be ASCII
-* Tagged literals are supported
-* Discard-nexr (`#_`) is supported
+* Assumes UTF-8, newline line endings; `wchar_t` is used throughout
+* Symbols and keywords must currently be ASCII
 * Comments are parsed (and ignored)
+* Tagged literals and discard-next-value (`#_`) are supported
 * Each parsed value contains tokenizer state including line and column
 * Parser produces (AFAIK) correct output on well-formed input
-* `main.c` contains a sample usage of the parser
+* A sample usage of the parser is in `main.c`; Makefile builds it as `crntl`
+* On macOS, `crntl.o` builds to just under 20K (apologies for the bloat)
 * There exists an [iOS framework](https://github.com/thunknyc/crntl-ios) for using CRNTL in Swift. It is currently being used in Thunk NYC Corp.'s computational notebook app:
 
 ![img_0554](https://user-images.githubusercontent.com/85875/42279604-544af52c-7f6c-11e8-8491-15d995c32a33.jpg)
